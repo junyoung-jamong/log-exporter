@@ -25,8 +25,22 @@ var FILE_LIST = [6]string{"log", "log.1", "log.2", "log.3", "log.4", "log.5"}
 func main() {
 	r := gin.Default()
 	r.GET("/log", GetLogs)
+	r.GET("/reboot", Reboot)
+	r.GET("/restart", ReStart)
 
 	r.Run(":9101")
+}
+
+func TestCMD(c *gin.Context) {
+	//exec.Command()
+}
+
+func Reboot() {
+
+}
+
+func ReStart() {
+
 }
 
 func GetLogs(c *gin.Context) {
