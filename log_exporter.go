@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -31,16 +32,36 @@ func main() {
 	r.Run(":9101")
 }
 
-func TestCMD(c *gin.Context) {
-	//exec.Command()
+func Reboot(c *gin.Context) {
+	out, err := exec.Command("sh", "reboot.sh").CombinedOutput()
+
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result":  true,
+			"message": err,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"result": true,
+			"data":   out,
+		})
+	}
 }
 
-func Reboot() {
+func ReStart(c *gin.Context) {
+	out, err := exec.Command("sh", "restart.sh").CombinedOutput()
 
-}
-
-func ReStart() {
-
+	if err != nil {
+		c.JSON(200, gin.H{
+			"result":  true,
+			"message": err,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"result": true,
+			"data":   out,
+		})
+	}
 }
 
 func GetLogs(c *gin.Context) {
