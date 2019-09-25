@@ -1,1 +1,1 @@
-reboot
+sudo reboot
