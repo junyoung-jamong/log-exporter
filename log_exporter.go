@@ -25,6 +25,7 @@ var FILE_LIST = [6]string{"log", "log.1", "log.2", "log.3", "log.4", "log.5"}
 
 func main() {
 	r := gin.Default()
+	r.GET("/ping", PING)
 	r.GET("/log", GetLogs)
 	r.GET("/reboot", Reboot)
 	r.GET("/restart", ReStart)
@@ -32,34 +33,44 @@ func main() {
 	r.Run(":9101")
 }
 
+func PING(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"result":  true,
+		"message": "pong",
+	})
+
+}
+
 func Reboot(c *gin.Context) {
-	out, err := exec.Command("sh", "reboot.sh").CombinedOutput()
+	cmd := exec.Command("sh", "reboot.sh")
+	err := cmd.Start()
+	cmd.Wait()
 
 	if err != nil {
 		c.JSON(200, gin.H{
-			"result":  true,
+			"result":  false,
 			"message": err,
 		})
 	} else {
 		c.JSON(200, gin.H{
 			"result": true,
-			"data":   out,
 		})
 	}
 }
 
 func ReStart(c *gin.Context) {
-	out, err := exec.Command("sh", "restart.sh").CombinedOutput()
+	cmd := exec.Command("sh", "restart.sh")
+	err := cmd.Start()
+	cmd.Wait()
 
 	if err != nil {
 		c.JSON(200, gin.H{
-			"result":  true,
+			"result":  false,
 			"message": err,
 		})
 	} else {
 		c.JSON(200, gin.H{
 			"result": true,
-			"data":   out,
 		})
 	}
 }
