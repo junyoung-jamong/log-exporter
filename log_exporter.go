@@ -38,7 +38,6 @@ func PING(c *gin.Context) {
 		"result":  true,
 		"message": "pong",
 	})
-
 }
 
 func Reboot(c *gin.Context) {
@@ -86,7 +85,7 @@ func GetLogs(c *gin.Context) {
 	}
 
 	currentDate := time.Now().Format("2006-01-02")
-	currentYear := currentDate[0:4]
+	currentYear, _ := strconv.ParseInt(currentDate[0:4], 10, 64)
 	currentMonth, _ := strconv.ParseInt(currentDate[5:7], 10, 64)
 
 	var page string
@@ -107,9 +106,9 @@ func GetLogs(c *gin.Context) {
 			month, _ := strconv.ParseInt(segment[6:8], 10, 64)
 
 			if month > currentMonth {
-				pageStartDt = currentYear + "-" + pageStartDt
+				pageStartDt = strconv.Itoa(int(currentYear-1)) + "-" + pageStartDt
 			} else {
-				pageStartDt = currentYear + "-" + pageStartDt
+				pageStartDt = strconv.Itoa(int(currentYear)) + "-" + pageStartDt
 			}
 
 			t1, _ := time.Parse(LAYOUT, pageStartDt)
@@ -130,9 +129,9 @@ func GetLogs(c *gin.Context) {
 			month, _ := strconv.ParseInt(line[6:8], 10, 64)
 
 			if month > currentMonth {
-				logDt = currentYear + "-" + logDt
+				logDt = strconv.Itoa(int(currentYear-1)) + "-" + logDt
 			} else {
-				logDt = currentYear + "-" + logDt
+				logDt = strconv.Itoa(int(currentYear)) + "-" + logDt
 			}
 
 			t1, _ := time.Parse(LAYOUT, logDt)
