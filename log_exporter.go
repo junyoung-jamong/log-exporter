@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
@@ -19,16 +20,16 @@ type Log struct {
 
 type Logs []Log
 
-const LOG_DIRECTORY = "/opt/meta/logs/"
 const LAYOUT = "2006-01-02T15:04:05.000Z"
 
+var LOG_DIRECTORY *string
 var FILE_LIST = [6]string{"log", "log.1", "log.2", "log.3", "log.4", "log.5"}
 
-var EXCLUDE_LIST = [1]string{
-	"Stats server unreachable",
-}
+var IGNORE_LIST []string
 
 func main() {
+	parseFlag()
+
 	r := gin.Default()
 	r.GET("/ping", PING)
 	r.GET("/log", GetLogs)
@@ -36,6 +37,21 @@ func main() {
 	r.GET("/restart", ReStart)
 
 	r.Run(":9101")
+}
+
+func parseFlag() {
+	LOG_DIRECTORY = flag.String("log", "/opt/meta/logs/", "Input log file directory")
+	ignoreFile := flag.String("ignore", "", "Input ignore file path")
+	flag.Parse()
+
+	f, err := ioutil.ReadFile(*ignoreFile)
+	if *ignoreFile != "" && err != nil { //파일이 존재하지 않거나 접근에 실패했을 경우
+		print("Ignore file error:", err)
+	} else {
+		ignores := string(f)
+		IGNORE_LIST = strings.Split(ignores, "\n")
+		fmt.Println("Ignore messages:", len(IGNORE_LIST), IGNORE_LIST)
+	}
 }
 
 func PING(c *gin.Context) {
@@ -81,7 +97,7 @@ func ReStart(c *gin.Context) {
 
 func GetLogs(c *gin.Context) {
 	start := c.DefaultQuery("start", "")
-	fmt.Println("start: ", start)
+	fmt.Println(start)
 
 	startInt, err := strconv.ParseInt(start, 10, 64)
 
@@ -91,7 +107,7 @@ func GetLogs(c *gin.Context) {
 	if err != nil {
 		hasRange = false
 	} else {
-		startTime = time.Unix(startInt, 0)
+		startTime = time.Unix(startInt, 0).UTC()
 		fmt.Println("startTime", startTime)
 	}
 
@@ -102,7 +118,7 @@ func GetLogs(c *gin.Context) {
 	var page string
 
 	for _, fileName := range FILE_LIST {
-		filePath := LOG_DIRECTORY + fileName
+		filePath := *LOG_DIRECTORY + fileName
 
 		f, err := ioutil.ReadFile(filePath)
 		if err != nil { //파일이 존재하지 않거나 접근에 실패했을 경우
@@ -133,6 +149,7 @@ func GetLogs(c *gin.Context) {
 	logList := strings.Split(page, "\n")
 	logs := *new(Logs)
 
+	//라인별로 로그 여부 판단
 	for _, line := range logList {
 		if strings.HasPrefix(line, "CRIT") || strings.HasPrefix(line, "ERROR") || strings.HasPrefix(line, "WARN") {
 			logLevel := strings.Trim(line[0:5], " ")      //Log Level
@@ -140,15 +157,15 @@ func GetLogs(c *gin.Context) {
 			message := line[26:]                          //Log Description
 
 			//로그 제외 목록 체크
-			isExclude := false
-			for _, exclude := range EXCLUDE_LIST {
-				if strings.Contains(line, exclude) {
-					isExclude = true
+			isIgnored := false
+			for _, ignore := range IGNORE_LIST {
+				if len(ignore) > 0 && strings.Contains(line, ignore) {
+					isIgnored = true
 					break
 				}
 			}
 
-			if isExclude {
+			if isIgnored {
 				continue
 			}
 
@@ -163,6 +180,8 @@ func GetLogs(c *gin.Context) {
 
 			t1, _ := time.Parse(LAYOUT, logDt)
 
+			fmt.Println(hasRange, startTime, t1)
+
 			//범위 조건 검사 및 반환 형식화
 			if !hasRange || t1.After(startTime) {
 				log := &Log{
@@ -172,8 +191,6 @@ func GetLogs(c *gin.Context) {
 				}
 
 				logs = append(logs, *log)
-			} else {
-				break
 			}
 		}
 	}
