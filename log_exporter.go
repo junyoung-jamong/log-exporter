@@ -98,16 +98,19 @@ func ReStart(c *gin.Context) {
 func GetLogs(c *gin.Context) {
 	start := c.DefaultQuery("start", "")
 
-	startInt, err := strconv.ParseInt(start, 10, 64)
-
 	hasRange := true
-	startTime := time.Unix(0, 0) //Default Time: 1970-01-01 09:00:00 +0900 KST
+	startTime, err := time.Parse(LAYOUT, start) //If Type: yyyy-MM-ddTHH:mm:ss.SSSZ
 
 	if err != nil {
-		hasRange = false
-	} else {
-		startTime = time.Unix(startInt, 0).UTC()
-		fmt.Println("startTime", startTime)
+		startInt, err := strconv.ParseInt(start, 10, 64) //if Type: Unix Timestamp
+
+		startTime = time.Unix(0, 0) //Default Time: 1970-01-01 09:00:00 +0900 KST
+
+		if err != nil {
+			hasRange = false
+		} else {
+			startTime = time.Unix(startInt, 0).UTC()
+		}
 	}
 
 	currentDate := time.Now().Format("2006-01-02")
