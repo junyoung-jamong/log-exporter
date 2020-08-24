@@ -97,7 +97,6 @@ func ReStart(c *gin.Context) {
 
 func GetLogs(c *gin.Context) {
 	start := c.DefaultQuery("start", "")
-	fmt.Println(start)
 
 	startInt, err := strconv.ParseInt(start, 10, 64)
 
@@ -179,8 +178,6 @@ func GetLogs(c *gin.Context) {
 			}
 
 			t1, _ := time.Parse(LAYOUT, logDt)
-
-			fmt.Println(hasRange, startTime, t1)
 
 			//범위 조건 검사 및 반환 형식화
 			if !hasRange || t1.After(startTime) {
